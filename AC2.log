@@ -1,0 +1,104 @@
+la2# patch -p1 < /opt/mangos_dist/trinity_src/anticheat/AC2my_10353.patch
+Hmm...  Looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Entities/Player/Player.cpp	2010-11-03 21:32:54.000000000 +0300
+|+++ 10353/src/server/game/Entities/Player/Player.cpp	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/Entities/Player/Player.cpp using Plan A...
+Hunk #1 succeeded at 520.
+Hunk #2 succeeded at 1909.
+Hunk #3 succeeded at 2068.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Entities/Player/Player.h	2010-11-03 21:32:54.000000000 +0300
+|+++ 10353/src/server/game/Entities/Player/Player.h	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/Entities/Player/Player.h using Plan A...
+Hunk #1 succeeded at 2594.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Entities/Unit/Unit.h	2010-11-03 21:32:54.000000000 +0300
+|+++ 10353/src/server/game/Entities/Unit/Unit.h	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/Entities/Unit/Unit.h using Plan A...
+Hunk #1 succeeded at 2008.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Globals/ObjectMgr.cpp	2010-11-03 21:32:54.000000000 +0300
+|+++ 10353/src/server/game/Globals/ObjectMgr.cpp	2010-11-08 15:40:08.000000000 +0300
+--------------------------
+Patching file src/server/game/Globals/ObjectMgr.cpp using Plan A...
+Hunk #1 succeeded at 5787.
+Hunk #2 succeeded at 5798.
+Hunk #3 succeeded at 5819.
+Hunk #4 succeeded at 5834.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Globals/ObjectMgr.h	2010-11-03 21:32:54.000000000 +0300
+|+++ 10353/src/server/game/Globals/ObjectMgr.h	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/Globals/ObjectMgr.h using Plan A...
+Hunk #1 succeeded at 680.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Server/Protocol/Handlers/MovementHandler.cpp	2010-11-03 21:32:59.000000000 +0300
+|+++ 10353/src/server/game/Server/Protocol/Handlers/MovementHandler.cpp	2010-11-08 16:01:29.000000000 +0300
+--------------------------
+Patching file src/server/game/Server/Protocol/Handlers/MovementHandler.cpp using Plan A...
+Hunk #1 succeeded at 31.
+Hunk #2 succeeded at 257.
+Hunk #3 succeeded at 311.
+Hunk #4 succeeded at 323.
+Hunk #5 succeeded at 352.
+Hunk #6 succeeded at 367.
+Hunk #7 succeeded at 721.
+Hunk #8 succeeded at 751.
+Hunk #9 succeeded at 1047.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/Server/Protocol/Handlers/TaxiHandler.cpp	2010-11-03 21:33:00.000000000 +0300
+|+++ 10353/src/server/game/Server/Protocol/Handlers/TaxiHandler.cpp	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/Server/Protocol/Handlers/TaxiHandler.cpp using Plan A...
+Hunk #1 succeeded at 49.
+Hunk #2 succeeded at 94.
+Hunk #3 succeeded at 134.
+Hunk #4 succeeded at 203.
+Hunk #5 succeeded at 222.
+Hunk #6 succeeded at 307.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/World/World.cpp	2010-11-03 21:33:02.000000000 +0300
+|+++ 10353/src/server/game/World/World.cpp	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/World/World.cpp using Plan A...
+Hunk #1 succeeded at 88.
+Hunk #2 succeeded at 563.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/game/World/World.h	2010-11-03 21:33:02.000000000 +0300
+|+++ 10353/src/server/game/World/World.h	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/game/World/World.h using Plan A...
+Hunk #1 succeeded at 714.
+Hunk #2 succeeded at 815.
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|--- 10353_1/src/server/worldserver/worldserver.conf.dist	2010-11-03 21:33:31.000000000 +0300
+|+++ 10353/src/server/worldserver/worldserver.conf.dist	2010-11-08 15:31:48.000000000 +0300
+--------------------------
+Patching file src/server/worldserver/worldserver.conf.dist using Plan A...
+Hunk #1 succeeded at 1882.
+done
+la2#
+

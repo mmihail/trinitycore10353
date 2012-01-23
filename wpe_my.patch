@@ -1,0 +1,67 @@
+--- src/server/game/Entities/Player/Player.cpp.orig	2011-10-26 14:47:50.000000000 +0400
++++ src/server/game/Entities/Player/Player.cpp	2011-10-26 14:54:33.000000000 +0400
+@@ -11212,6 +11212,15 @@
+     if (pItem->IsBindedNotWith(this))
+         return EQUIP_ERR_DONT_OWN_THAT_ITEM;
+ 
++    // Currency tokens are not supposed to be swapped out of their hidden bag
++    uint8 pItemslot = pItem->GetSlot();
++    if (pItemslot >= CURRENCYTOKEN_SLOT_START && pItemslot < CURRENCYTOKEN_SLOT_END)
++    {
++        sLog.outError("Possible hacking attempt: Player %s [guid: %u] tried to move token [guid: %u, entry: %u] out of the currency bag!",
++                GetName(), GetGUIDLow(), pItem->GetGUIDLow(), pProto->ItemId);
++        return EQUIP_ERR_ITEMS_CANT_BE_SWAPPED;
++    }
++
+     // check count of items (skip for auto move for same player from bank)
+     uint8 res = CanTakeMoreSimilarItems(pItem);
+     if (res != EQUIP_ERR_OK)
+--- src/server/game/Server/Protocol/Handlers/QuestHandler.cpp.orig	2011-10-26 14:45:45.000000000 +0400
++++ src/server/game/Server/Protocol/Handlers/QuestHandler.cpp	2011-10-26 15:04:46.000000000 +0400
+@@ -470,6 +470,12 @@
+     Quest const *pQuest = sObjectMgr.GetQuestTemplate(quest);
+     if (pQuest)
+     {
++        if (!_player->CanSeeStartQuest(pQuest) && _player->GetQuestStatus(quest)==QUEST_STATUS_NONE)
++        {
++            sLog.outError("Possible hacking attempt: Player %s [guid: %u] tried to complete quest [entry: %u] without being in possession of the quest!",
++                          _player->GetName(), _player->GetGUIDLow(), quest);
++            return;
++        }
+         // TODO: need a virtual function
+         if (GetPlayer()->InBattleground())
+             if (Battleground* bg = GetPlayer()->GetBattleground())
+--- src/server/game/Server/Protocol/Handlers/SpellHandler.cpp.orig	2011-10-26 14:44:09.000000000 +0400
++++ src/server/game/Server/Protocol/Handlers/SpellHandler.cpp	2011-10-26 15:07:42.000000000 +0400
+@@ -221,6 +221,15 @@
+         return;
+     }
+ 
++    // Verify that the bag is an actual bag or wrapped item that can be used "normally"
++    if (!(proto->Flags & ITEM_PROTO_FLAG_OPENABLE) && !pItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_WRAPPED))
++    {
++        pUser->SendEquipError(EQUIP_ERR_CANT_DO_RIGHT_NOW, pItem, NULL);
++        sLog.outError("Possible hacking attempt: Player %s [guid: %u] tried to open item [guid: %u, entry: %u] which is not openable!",
++                pUser->GetName(), pUser->GetGUIDLow(), pItem->GetGUIDLow(), proto->ItemId);
++        return;
++    }
++
+     // locked item
+     uint32 lockId = proto->LockID;
+     if (lockId)
+--- src/server/game/Spells/SpellEffects.cpp.orig	2011-10-26 14:39:17.000000000 +0400
++++ src/server/game/Spells/SpellEffects.cpp	2011-10-26 15:09:39.000000000 +0400
+@@ -2665,6 +2665,13 @@
+ 
+     if (gameObjTarget)
+     {
++        // Players shouldn't be able to loot gameobjects that are currently despawned
++        if (!gameObjTarget->isSpawned() && !player->isGameMaster())
++        {
++            sLog.outError("Possible hacking attempt: Player %s [guid: %u] tried to loot a gameobject [entry: %u id: %u] which is on respawn time without being in GM mode!",
++                            player->GetName(), player->GetGUIDLow(), gameObjTarget->GetEntry(), gameObjTarget->GetGUIDLow());
++            return;
++        }
+         if (sScriptMgr.OnGossipHello(player, gameObjTarget))
+             return;
+ 

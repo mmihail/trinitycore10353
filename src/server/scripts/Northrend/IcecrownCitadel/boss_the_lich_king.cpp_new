@@ -1,0 +1,909 @@
+/*
+* Copyright (C) 2008-2010 TrinityCore <Вы можете увидеть ссылки перед ответом>
+* Copyright (C) 2006-2009 ScriptDev2 <Вы можете увидеть ссылки перед ответом>
+*
+* This program is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation; either version 2 of the License, or (at your
+* option) any later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+* more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with this program. If not, see <Вы можете увидеть ссылки перед ответом>.
+*/
+
+/* ScriptData
+SDName: Boss_the_lich_king
+SD%Complete: 0
+SDComment: Redone, better-looking code.
+SDCategory: Icecrown Citadel
+EndScriptData */
+
+#include "ObjectMgr.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "SpellScript.h"
+#include "SpellAuras.h"
+#include "icecrown_citadel.h"
+#include "MapManager.h"
+
+enum Creatures
+{
+CREATURE_TERENAS = 38579,
+//CREATURE_DEFILE = 38757,
+//CREATURE_VALKYR = 36609,
+//CREATURE_ICE_SPHERE = 36633,
+//CREATURE_RAGING_SPIRIT = 36701,
+CREATURE_VILE_SPIRIT = 37799,
+CREATURE_FM_TRIGGER = 38584,
+CREATURE_TIRION = 38995,
+//CREATURE_LICH_KING = 36597,
+};
+
+enum Actions
+{
+ACTION_START_EVENT = 1,
+ACTION_START_OUTRO = 2,
+};
+
+enum Events
+{
+EVENT_INTRO_0 = 0,
+EVENT_INTRO_1 = 1,
+EVENT_INTRO_2 = 2,
+EVENT_INTRO_3 = 3,
+EVENT_INTRO_4 = 4,
+EVENT_INTRO_5 = 5,
+EVENT_INTRO_6 = 6,
+EVENT_INTRO_7 = 7,
+EVENT_INTRO_8 = 8,
+EVENT_INTRO_9 = 9,
+EVENT_INTRO_10 = 10,
+EVENT_INTRO_11 = 11,
+
+EVENT_END_1 = 12,
+EVENT_END_2 = 13,
+EVENT_END_3 = 14,
+EVENT_END_4 = 15,
+EVENT_END_5 = 16,
+EVENT_END_6 = 17,
+EVENT_END_7 = 18,
+EVENT_END_8 = 19,
+EVENT_END_9 = 20,
+EVENT_END_10 = 21,
+EVENT_END_11 = 22,
+EVENT_END_12 = 23,
+EVENT_END_13 = 24,
+EVENT_END_14 = 25,
+EVENT_END_15 = 26,
+EVENT_END_16 = 27,
+EVENT_END_17 = 28,
+EVENT_END_18 = 29,
+EVENT_END_19 = 30,
+EVENT_END_20 = 31,
+
+EVENT_END_TRANSITION_PHASE = 32,
+EVENT_SUMMON_SHAMBLING_HORROR = 33,
+EVENT_SUMMON_DRUDGE_GHOUL = 34,
+EVENT_NECROTIC_PLAGUE = 35,
+EVENT_BERSERK = 36,
+EVENT_SUMMON_VALKYR = 37,
+EVENT_SUMMON_DEFILE = 38,
+EVENT_SOUL_REAPER = 39,
+EVENT_SOUL_REAPER_AURA = 40,
+EVENT_HARVEST_SOULS = 41,
+EVENT_SUMON_VILE_SPIRIT = 42,
+EVENT_REMORSELESS_WINTER = 43,
+EVENT_PAIN_AND_SUFFERING = 44,
+EVENT_SUMMON_ICE_SPHERE = 45,
+EVENT_SUMMON_RAGING_SPIRIT = 46,
+EVENT_SUMMON_VILE_SPIRIT = 47,
+};
+
+enum Sounds
+{
+SOUND_INTRO_LK_1 = 17349,
+SOUND_INTRO_TIRION_2 = 17390,
+SOUND_INTRO_LK_3 = 17350,
+SOUND_INTRO_TIRION_4 = 17391,
+SOUND_INTRO_LK_5 = 17351,
+
+SOUND_BERSERCK = 17365,
+SOUND_REMORSELESS_WINTER = 17369,
+SOUND_HARVEST_SOULS = 17366,
+SOUND_UNCKOWN_1 = 17359,
+
+SOUND_OUTRO_LK_1 = 17353,
+SOUND_OUTRO_LK_2 = 17355,
+SOUND_OUTRO_LK_3 = 17356,
+SOUND_OUTRO_LK_4 = 17357,
+SOUND_OUTRO_TIRION_5 = 17392,
+SOUND_OUTRO_LK_6 = 17358,
+SOUND_OUTRO_TIRION_7 = 17393,
+SOUND_OUTRO_FATHER_8 = 17397,
+SOUND_OUTRO_FATHER_9 = 17398,
+SOUND_OUTRO_LK_10 = 17361,
+
+SOUND_OUTRO_LK_DEATH = 17362,
+};
+
+// Gossip option
+
+#define GOSSIP_START_EVENT "We are prepared, Highlord. Let us battle for the fate of Azeroth! For the light of dawn!"
+
+// * ------------------------------------------------ * //
+// * ----- Locations ----- * //
+// * ------------------------------------------------ * //
+
+struct Locations
+{
+float x, y, z;
+};
+
+static Locations MovementPoints[]=
+{
+{461.792f, -2125.856f, 1040.860f}, // Lich King Downstairs
+{495.0f, -2124.653f, 1040.860f}, // Tirion Rush
+};
+
+const Position MovePosition = {461.792633f, -2125.855957f, 1040.860107f};
+const Position MoveEndingPosition = {503.156525f, -2124.516602f, 1040.860107f};
+const Position MoveTirionFrostmourne = {490.110779f, -2124.989014f, 1040.860352f};
+const Position MoveTirionAttack = {478.333466f, -2124.618652f, 1040.859863f};
+const Position ValkyrMoveMent = {498.004486f, 2201.573486f, 1046.093872f};
+
+// * ----------------------------------------------- * //
+// * ----- Texts ----- * //
+// * ----------------------------------------------- * //
+
+#define SAY_INTRO_1_KING "So...the Light's vaunted justice has finally arrived. Shall I lay down Frostmourne and throw myself at your mercy, Fordring?"
+#define SAY_INTRO_2_TIRION "We will grant you a swift death, Arthas. More than can be said for the thousands you've tortured and slain."
+#define SAY_INTRO_3_KING "You will learn of that first hand. When my work is complete, you will beg for mercy -- and I will deny you. Your anguished cries will be testament to my unbridled power."
+#define SAY_INTRO_4_TIRION "So be it. Champions, attack!"
+#define SAY_INTRO_5_KING "I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image."
+
+#define SAY_ENDING_1_KING "No questions remain unanswered. No doubts linger. You are Azeroth's greatest champions! You overcame every challenge I laid before you. My mightiest servants have fallen before your relentless onslaught, your unbridled fury... Is it truly righteousness that drives you? I wonder."
+#define SAY_ENDING_2_KING "You trained them well, Fordring. You delivered the greatest fighting force this world has ever known... right into my hands -- exactly as I intended. You shall be rewarded for your unwitting sacrifice."
+#define SAY_ENDING_3_KING "Watch now as I raise them from the dead to become masters of the Scourge. They will shroud this world in chaos and destruction. Azeroth's fall will come at their hands -- and you will be the first to die."
+#define SAY_ENDING_4_KING "I delight in the irony."
+#define SAY_ENDING_5_TIRION "LIGHT, GRANT ME ONE FINAL BLESSING. GIVE ME THE STRENGTH... TO SHATTER THESE BONDS!"
+#define SAY_ENDING_6_KING "Impossible..."
+#define SAY_ENDING_7_TIRION "No more, Arthas! No more lives will be consumed by your hatred!"
+#define SAY_ENDING_8_FATHER "Free at last! It is over, my son. This is the moment of reckoning."
+#define SAY_ENDING_9_FATHER "Rise up, champions of the Light!"
+#define SAY_ENDING_10_TIRION "THE LICH KING...MUST...FALL!"
+#define SAY_ENDING_11_KING "Now I stand, the lion before the lambs... and they do not fear."
+#define SAY_ENDING_12_KING "They cannot fear."
+
+#define SAY_EMOTE_DEFILE "The Lich King begins to cast Defile."
+
+// * ----------------------------------------------- * //
+// * ----- Spells ----- * //
+// * ----------------------------------------------- * //
+
+enum Spells
+{
+// Spell used in phase 1 and 2
+SPELL_INFEST_10N = 70541, // 10 Normal
+SPELL_INFEST_10H = 73780, // 10 Heroic
+SPELL_INFEST_25N = 73779, // 25 Normal
+SPELL_INFEST_25H = 73781, // 25 Heroic
+
+// Phase 1 spells
+SPELL_SUMMON_DRUDGE_GHOULS_AM = 70358, // All Modes
+SPELL_SUMMON_SHAMBLING_HORROR_AM = 70372, // All Modes
+SPELL_SHAMBLING_HORROR_SHOCKWAVE_AM = 72149, // All Modes
+SPELL_SHAMBLING_HORROR_ENRAGE_AM = 72143, // All Modes
+
+SPELL_NECROTIC_PLAGUE_10N = 70337, // 10 Normal
+SPELL_NECROTIC_PLAGUE_10H = 73786, // 10 Heroic
+SPELL_NECROTIC_PLAGUE_25N = 73785, // 25 Normal
+SPELL_NECROTIC_PLAGUE_25H = 73787, // 25 Heroic
+
+SPELL_SUMMON_SHADOW_TRAP_10H_25H = 73539,
+
+// Phase 2 spells
+SPELL_SUMMON_VALKYR = 69037, // All Modes
+SPELL_VALKYR_GRAB = 0, // Need to find out this one (if there's one)
+AURA_VALKYR_WINGS_OF_DAMNED = 74352, // All Modes
+SPELL_VALKYR_LIFE_SIPHON_10H_25H = 73783, // 10 & 25 Heroic
+
+// Used in both phase 2 and 3
+SPELL_DEFILE_10N = 72754, // Bugged
+SPELL_DEFILE_10H = 73709, // Bugged
+SPELL_DEFILE_25N = 73708, // Bugged
+SPELL_DEFILE_25H = 73710, // Bugged
+
+SPELL_SOUL_REAPER_10N = 69409, // 10 Normal
+SPELL_SOUL_REAPER_10H = 73798, // 10 Heroic
+SPELL_SOUL_REAPER_25N = 73797, // 25 Normal
+SPELL_SOUL_REAPER_25H = 73799, // 25 Heroic
+
+SOUL_REAPER_AURA = 69410, // Applied to LK 5 seconds after Soul Reaper
+
+// Phase 3 spells
+SPELL_HARVEST_SOUL_10N = 68980, // 10 Normal
+SPELL_HARVEST_SOUL_10H = 68980, // 10 Heroic
+SPELL_HARVEST_SOUL_25N = 74325, // 25 Normal
+SPELL_HARVEST_SOUL_25H = 74327, // 25 Heroic
+
+SPELL_SUMMON_VILE_SPIRIT = 70498, // All Modes
+SPELL_VILE_SPIRIT_SPIRIT_BURST_10N = 70503, // 10 Normal
+SPELL_VILE_SPIRIT_SPIRIT_BURST_10H = 70503, // 10 Heroic
+SPELL_VILE_SPIRIT_SPIRIT_BURST_25N = 73806, // 25 Normal
+SPELL_VILE_SPIRIT_SPIRIT_BURST_25H = 73808, // 25 Heroic
+
+// Transition spells
+SPELL_REMORSELESS_WINTER_10N = 68981, // 10 Normal
+SPELL_REMORSELESS_WINTER_10H = 73792, // 10 Heroic
+SPELL_REMORSELESS_WINTER_25N = 73791, // 25 Normal
+SPELL_REMORSELESS_WINTER_25H = 74275, // 25 Heroic
+
+SPELL_PAIN_AND_SUFFERING_10N = 72133, // 10 Normal
+SPELL_PAIN_AND_SUFFERING_10H = 73789, // 10 Heroic
+SPELL_PAIN_AND_SUFFERING_25N = 73788, // 25 Normal
+SPELL_PAIN_AND_SUFFERING_25H = 73790, // 25 Heroic
+
+SPELL_SUMMON_ICE_SPHERE = 69103, // All Modes
+// Those seem to be triggered.
+SPELL_ICE_SPHERE_ICE_PULSE_10N = 69099, // 10 Normal
+SPELL_ICE_SPHERE_ICE_PULSE_10H = 73776, // 10 Heroic
+SPELL_ICE_SPHERE_ICE_PULSE_25N = 73777, // 25 Normal
+SPELL_ICE_SPHERE_ICE_PULSE_25H = 73778, // 25 Heroic
+// May be the real one
+SPELL_ICE_PULSE_BOLVORS = 69091, // Channeled visual
+// Other (Thanks Bolvor)
+SPELL_ICE_BURST_DISTANCE_CHECK = 69109, // Will trigger Ice Burst automatically
+SPELL_ICE_SPHERE_ICE_BURST_10N = 69108, // 10 Normal
+SPELL_ICE_SPHERE_ICE_BURST_10H = 69108, // 10 Heroic
+SPELL_ICE_SPHERE_ICE_BURST_25N = 69108, // 25 Normal
+SPELL_ICE_SPHERE_ICE_BURST_25H = 69108, // 25 Heroic ? Maybe 73775
+
+SPELL_SUMMON_RAGING_SPIRIT = 69200, // All Modes
+SPELL_RAGING_SPIRIT_SOUL_SHRIEK_10N = 69242, // 10 Normal
+SPELL_RAGING_SPIRIT_SOUL_SHRIEK_10H = 69242, // 10 Heroic
+SPELL_RAGING_SPIRIT_SOUL_SHRIEK_25N = 73800, // 25 Normal
+SPELL_RAGING_SPIRIT_SOUL_SHRIEK_25H = 73802, // 25 Heroic
+
+SPELL_QUAKE = 72262, // Just Visual
+
+SPELL_ICE_LOCK = 71614, // Tirion Lock Visual
+SPELL_FREE_TIRION = 71797,
+SPELL_FURY_OF_FROSTMOURNE = 72350, // Kaboom
+SPELL_RAISE_DEAD = 71769, // Channeled spell
+SPELL_RESURRECTION_MASS = 72429, // Terenas's
+SPELL_FROSTMOURNE_DISSAPEAR = 72726, // Outro visual #1
+SPELL_SUMMON_BROKEN_FROSTMOURNE = 72406, // Outro visual #2
+SPELL_BROKEN_FROSTMOURNE = 72398, // Outro visual #3
+SPELL_FROSTMOURNE_TRIGGER = 72405, // Invisible Dummy's Trigger (May be WRONG)
+SPELL_REVIVE_VISUAL = 37755, //
+SPELL_DEFILE_VISUAL = 72743, // Defile Aspect
+SPELL_DROP_FROSTMOURNE = 73017, // Outro Visual #4
+SPELL_SUMMON_FROSTMOURNE_TRIGGER = 72407, //
+SPELL_REMOVE_WEAPON = 72399, // Outro Visual #5
+SPELL_SUMMON_MENETHIL = 72420, // caster - 38584
+SPELL_VALKYR_CHARGE = 74399, // Gotta use it
+};
+
+// * ----------------------------------------------- * //
+// * ----- Tirion Fordring - Encounter Starter ----- * //
+// * ----------------------------------------------- * //
+
+class npc_tirion_fordring_icc : public CreatureScript
+{
+public:
+npc_tirion_fordring_icc() : CreatureScript("npc_tirion_fordring_lk") { }
+
+struct npc_tirion_fordring_iccAI : public ScriptedAI
+{
+npc_tirion_fordring_iccAI(Creature* creature) : ScriptedAI(creature)
+{
+instance = me->GetInstanceScript();
+}
+
+void Reset()
+{
+me->SetReactState(REACT_PASSIVE);
+me->SetSpeed(MOVE_RUN, 1.8f);
+me->SetSpeed(MOVE_WALK, 1.8f);
+me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+
+instance->SetBossState(DATA_LICH_KING_EVENT, NOT_STARTED);
+}
+
+void DoAction(const uint32 uiAction)
+{
+if(uiAction == ACTION_START_EVENT)
+{
+events.Reset();
+events.RescheduleEvent(EVENT_INTRO_0, 0);
+events.RescheduleEvent(EVENT_INTRO_1, 3000);
+events.RescheduleEvent(EVENT_INTRO_2, 17000);
+events.RescheduleEvent(EVENT_INTRO_3, 26000);
+events.RescheduleEvent(EVENT_INTRO_4, 29000);
+events.RescheduleEvent(EVENT_INTRO_5, 31000);
+events.RescheduleEvent(EVENT_INTRO_6, 49000);
+events.RescheduleEvent(EVENT_INTRO_7, 50000);
+events.RescheduleEvent(EVENT_INTRO_8, 52000);
+events.RescheduleEvent(EVENT_INTRO_9, 54000);
+events.RescheduleEvent(EVENT_INTRO_10, 66000);
+
+me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+}
+}
+
+void UpdateAI(const uint32 uiDiff)
+{
+if (!UpdateVictim())
+return;
+
+events.Update(uiDiff);
+
+while (uint32 eventId = events.ExecuteEvent())
+{
+switch (eventId)
+{
+case EVENT_INTRO_0:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->SetStandState(UNIT_STAND_STATE_STAND);
+pLichKing->GetMotionMaster()->MovePoint(0, MovePosition);
+me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
+}
+break;
+}
+case EVENT_INTRO_1:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_TALK);
+pLichKing->MonsterYell(SAY_INTRO_1_KING, LANG_UNIVERSAL,0);
+DoPlaySoundToSet(pLichKing, SOUND_INTRO_LK_1);
+}
+break;
+}
+case EVENT_INTRO_2:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+me->MonsterYell(SAY_INTRO_2_TIRION, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_INTRO_TIRION_2);
+}
+break;
+}
+case EVENT_INTRO_3:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->MonsterYell(SAY_INTRO_3_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(pLichKing, SOUND_INTRO_LK_3);
+pLichKing->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_LAUGH);
+}
+break;
+}
+case EVENT_INTRO_4:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+pLichKing->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_POINT_NOSHEATHE);
+break;
+}
+case EVENT_INTRO_5:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+pLichKing->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+break;
+}
+case EVENT_INTRO_6:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_POINT_NOSHEATHE);
+me->MonsterYell(SAY_INTRO_4_TIRION, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_INTRO_TIRION_4);
+}
+break;
+}
+case EVENT_INTRO_7:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+me->GetMotionMaster()->MovePoint(0, MoveTirionAttack);
+}
+break;
+}
+case EVENT_INTRO_8:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->CastSpell(me, SPELL_ICE_LOCK, true);
+//me->AddAura(SPELL_ICE_LOCK, me);
+}
+break;
+}
+case EVENT_INTRO_9:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->MonsterYell(SAY_INTRO_5_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(pLichKing, SOUND_INTRO_LK_5);
+}
+break;
+}
+case EVENT_INTRO_10:
+{
+if(Creature* pLichKing = Unit::GetCreature(*me, instance->GetData64(DATA_LICH_KING)))
+{
+pLichKing->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+pLichKing->SetReactState(REACT_AGGRESSIVE);
+pLichKing->SetInCombatWithZone();
+if(Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 150.0f, true))
+{
+pLichKing->AI()->AttackStart(target);
+CAST_AI(boss_the_lich_king_icc::boss_the_lich_king _iccAI, pLichKing->AI())->SetPhase(1);
+}
+}
+break;
+}
+}
+}
+
+}
+
+private:
+EventMap events;
+InstanceScript* instance;
+};
+
+bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+{
+pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_START_EVENT, GOSSIP_SENDER_MAIN, 42);
+
+pPlayer->PlayerTalkClass->SendGossipMenu(10600, pCreature->GetGUID());
+
+return true;
+}
+
+bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 sender, uint32 uiAction)
+{
+pPlayer->PlayerTalkClass->ClearMenus();
+if (uiAction == 42)
+{
+pPlayer->CLOSE_GOSSIP_MENU();
+pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+
+Map::PlayerList const &PlList = pCreature->GetMap()->GetPlayers();
+if (PlList.isEmpty()) return true;
+for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+i->getSource()->GetSession()->SendAreaTriggerMessage("Rencontre contre le Roi Liche engag.e par %s. Bonne chance !", pPlayer->GetName());
+
+CAST_AI(npc_tirion_fordring_icc::npc_tirion_fordri ng_iccAI, pCreature->AI())->DoAction(ACTION_START_EVENT);
+}
+
+return true;
+}
+
+CreatureAI* GetAI(Creature* creature) const
+{
+return new npc_tirion_fordring_iccAI(creature);
+}
+};
+
+// * ----------------------------------------------- * //
+// * ---------- The Lich King - Hi Badass ---------- * //
+// * ----------------------------------------------- * //
+
+// Phase 0 : Intro
+// 1 : Phase #1
+// 2 : Transition #1 (60 sec.)
+// 3 : Phase #2
+// 4 : Transition #2 (60 sec.)
+// 5 : Phase #3
+// 6 : Outro
+
+class boss_the_lich_king_icc : public CreatureScript
+{
+public:
+boss_the_lich_king_icc() : CreatureScript("boss_the_lich_king_icc") { }
+
+struct boss_the_lich_king_iccAI : public BossAI
+{
+boss_the_lich_king_iccAI(Creature* creature) : BossAI(creature, DATA_LICH_KING), summons(creature)
+{
+instance = me->GetInstanceScript();
+uiStage = 0; // No stage yet
+
+me->SetReactState(REACT_PASSIVE);
+me->SetSpeed(MOVE_RUN, 1.8f);
+me->SetSpeed(MOVE_WALK, 1.8f);
+
+instance->SetBossState(DATA_LICH_KING_EVENT, NOT_STARTED);
+}
+
+void InitializeAI()
+{
+if (!instance || static_cast<InstanceMap*>(me->GetMap())->GetScriptId() != GetScriptId(ICCScriptName))
+me->IsAIEnabled = false;
+else if (!me->isDead())
+Reset();
+}
+
+void SetPhase(uint32 uiPhaseArg)
+{
+uiStage = uiPhaseArg;
+}
+
+void Reset()
+{
+me->SetReactState(REACT_PASSIVE);
+me->SetSpeed(MOVE_RUN, 1.8f);
+me->SetSpeed(MOVE_WALK, 1.8f);
+
+instance->SetBossState(DATA_LICH_KING_EVENT, NOT_STARTED);
+
+uiStage = 1;
+}
+
+void DoAction(const uint32 uiAction)
+{
+if(uiAction == ACTION_START_OUTRO)
+{
+me->SetReactState(REACT_PASSIVE);
+me->CastStop();
+me->AttackStop();
+
+summons.DespawnAll();
+
+events.Reset();
+events.RescheduleEvent(EVENT_END_1, 0);
+events.RescheduleEvent(EVENT_END_2, 15000);
+events.RescheduleEvent(EVENT_END_3, 39000);
+events.RescheduleEvent(EVENT_END_4, 64000);
+events.RescheduleEvent(EVENT_END_5, 68000);
+events.RescheduleEvent(EVENT_END_6, 96000);
+events.RescheduleEvent(EVENT_END_7, 104000);
+events.RescheduleEvent(EVENT_END_8, 115000);
+events.RescheduleEvent(EVENT_END_9, 120100); // 5 secondes chronometer IG, may be 6 ?
+events.RescheduleEvent(EVENT_END_10, 121000);
+events.RescheduleEvent(EVENT_END_11, 122000);
+events.RescheduleEvent(EVENT_END_12, 125000);
+events.RescheduleEvent(EVENT_END_13, 126000);
+events.RescheduleEvent(EVENT_END_14, 129000);
+events.RescheduleEvent(EVENT_END_15, 131000);
+events.RescheduleEvent(EVENT_END_16, 136000);
+events.RescheduleEvent(EVENT_END_17, 142000);
+events.RescheduleEvent(EVENT_END_18, 145000);
+events.RescheduleEvent(EVENT_END_19, 151000);
+events.RescheduleEvent(EVENT_END_20, 156000);
+}
+}
+
+void UpdateAI(const uint32 uiDiff)
+{
+if (!UpdateVictim() || uiStage == 0)
+return;
+
+events.Update(uiDiff);
+
+if(me->GetHealthPct() <= 70.0f && !FirstTransition)
+{
+SetPhase(2); // Transition #1 (60 secs.)
+FirstTransition = true;
+}
+
+if(me->GetHealthPct() <= 30.0f && !SecondTransition)
+{
+SetPhase(4); // Transition #2 (60 secs.)
+SecondTransition = true;
+}
+
+if(me->GetHealthPct() <= 10.0f && !ThirdTransition)
+{
+// Outro
+SetPhase(6);
+ThirdTransition = true;
+}
+
+while(uint32 EventID = events.ExecuteEvent())
+{
+switch (EventID)
+{
+case EVENT_END_TRANSITION_PHASE:
+SetPhase(uiStage + 1);
+break;
+case EVENT_SUMMON_SHAMBLING_HORROR: // Phase #1
+if(uiStage != 1) break;
+DoCastAOE(SPELL_SUMMON_SHAMBLING_HORROR_AM);
+events.RescheduleEvent(EVENT_SUMMON_SHAMBLING_HORR OR, 30000);
+break;
+case EVENT_SUMMON_DRUDGE_GHOUL: // Phase #1
+if(uiStage != 1) break;
+DoCastAOE(SPELL_SUMMON_DRUDGE_GHOULS_AM);
+events.RescheduleEvent(EVENT_SUMMON_DRUDGE_GHOUL, 20000);
+break;
+case EVENT_NECROTIC_PLAGUE: // Phase #1
+{
+if(uiStage != 1) break;
+Unit *pPlagued = SelectTarget(SELECT_TARGET_RANDOM, 0);
+DoCast(pPlagued, RAID_MODE(SPELL_NECROTIC_PLAGUE_10N, SPELL_NECROTIC_PLAGUE_25N, SPELL_NECROTIC_PLAGUE_10H, SPELL_NECROTIC_PLAGUE_25H));
+events.RescheduleEvent(EVENT_NECROTIC_PLAGUE, 30000); // Better to doublecheck, this is not Blizzlike at all
+break;
+}
+case EVENT_BERSERK: // Do not care about phases
+DoCast(me, 47008); // +900% DPS, +150% Haste, Tauntable
+break;
+case EVENT_SUMMON_VALKYR: // Phase #2
+if(uiStage != 3) break;
+//DoCast(SPELL_SUMMON_VALKYR);
+me->CastSpell(me, SPELL_SUMMON_VALKYR, true);
+events.RescheduleEvent(EVENT_SUMMON_VALKYR, 20000);
+break;
+case EVENT_SUMMON_DEFILE: // Phase #2 and #3 (3 / 5 for the script)
+{
+if(uiStage != 3 || uiStage != 5) break;
+if(Unit *pDefiled = SelectTarget(SELECT_TARGET_RANDOM, 0))
+{
+me->SummonCreature(CREATURE_DEFILE, pDefiled->GetPositionX(), pDefiled->GetPositionY(), pDefiled->GetPositionZ(), 30000);
+me->MonsterTextEmote(SAY_EMOTE_DEFILE, 0, true);
+}
+events.RescheduleEvent(EVENT_SUMMON_DEFILE, 25000);
+break;
+}
+case EVENT_SOUL_REAPER: // Phase #2 and #3 (3 / 5 for the script)
+if(uiStage != 3 || uiStage != 5) break;
+me->CastSpell(me->getVictim(), RAID_MODE(SPELL_SOUL_REAPER_10N, SPELL_SOUL_REAPER_25N, SPELL_SOUL_REAPER_10H, SPELL_SOUL_REAPER_25H), false);
+events.RescheduleEvent(EVENT_SOUL_REAPER, 15000);
+break;
+case EVENT_SOUL_REAPER_AURA: // Phase #2 and #3 (3 / 5 for the script)
+if(uiStage != 3 || uiStage != 5) break;
+DoCast(me, SOUL_REAPER_AURA);
+events.RescheduleEvent(EVENT_SOUL_REAPER_AURA, 20000);
+break;
+case EVENT_HARVEST_SOULS: // Phase #3
+{
+if(uiStage != 5) break;
+if(Unit *pHarvested = SelectTarget(SELECT_TARGET_RANDOM, 0))
+{
+me->CastSpell(pHarvested, RAID_MODE(SPELL_HARVEST_SOUL_10N, SPELL_HARVEST_SOUL_25N, SPELL_HARVEST_SOUL_10H, SPELL_HARVEST_SOUL_25H), true);
+}
+events.RescheduleEvent(EVENT_HARVEST_SOULS, 70000);
+break;
+}
+case EVENT_SUMMON_VILE_SPIRIT: // Phase #3
+{
+if(uiStage != 5) break;
+for (uint8 i = 0; i < 10; ++i)
+me->SummonCreature(CREATURE_VILE_SPIRIT, MoveEndingPosition.m_positionX + float(irand(-30,30)), MoveEndingPosition.m_positionY + float(irand(-30,30)), MoveEndingPosition.m_positionZ + 40.0f);
+// No idea whether 8 or 10, so 9.
+events.RescheduleEvent(EVENT_SUMMON_VILE_SPIRIT, 30000);
+break;
+}
+case EVENT_REMORSELESS_WINTER: // Transitions (2 / 4)
+if(uiStage != 2 || uiStage != 4) break;
+DoCast(me, RAID_MODE(SPELL_REMORSELESS_WINTER_10N, SPELL_REMORSELESS_WINTER_25N, SPELL_REMORSELESS_WINTER_10H, SPELL_REMORSELESS_WINTER_25H), true);
+}
+}
+}
+
+void JustDied(Unit* pKiller)
+{
+me->MonsterYell("They cannot fear.", LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_DEATH);
+
+if(instance)
+instance->SetData(DATA_LICH_KING_EVENT, DONE);
+
+Map::PlayerList const &PlList = me->GetMap()->GetPlayers();
+if (PlList.isEmpty()) return;
+
+for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+i->getSource()->GetSession()->SendAreaTriggerMessage("F.licitations! Coup fatal port. par %s. (. Cron)", pKiller->GetName());
+}
+
+void Outro()
+{
+while (uint32 eventId = events.ExecuteEvent())
+{
+switch (eventId)
+{
+case EVENT_END_1:
+{
+me->GetMotionMaster()->MoveIdle();
+me->SetReactState(REACT_PASSIVE);
+me->AttackStop();
+me->CastStop();
+me->SetInCombatWithZone();
+me->MonsterYell("The end has come!", LANG_UNIVERSAL, 0);
+
+DoCastAOE(SPELL_FURY_OF_FROSTMOURNE);
+
+Map::PlayerList const &PlList = me->GetMap()->GetPlayers();
+if (PlList.isEmpty()) return;
+
+for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+{
+me->Kill(i->getSource(), false);
+}
+break;
+}
+case EVENT_END_2:
+{
+me->MonsterYell(SAY_ENDING_1_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_1);
+break;
+}
+case EVENT_END_3:
+{
+me->MonsterYell(SAY_ENDING_2_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_2);
+break;
+}
+case EVENT_END_4:
+{
+me->GetMotionMaster()->MovePoint(0, MoveEndingPosition);
+break;
+}
+case EVENT_END_5:
+{
+me->MonsterYell(SAY_ENDING_3_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_3);
+DoCastAOE(SPELL_RAISE_DEAD, false);
+me->HandleEmoteCommand(EMOTE_ONESHOT_LAUGH);
+break;
+}
+case EVENT_END_6:
+{
+me->MonsterYell(SAY_ENDING_4_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_4);
+break;
+}
+case EVENT_END_7:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+pTirion->MonsterYell(SAY_ENDING_5_TIRION, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(pTirion, SOUND_OUTRO_TIRION_5);
+}
+break;
+}
+case EVENT_END_8:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+pTirion->CastSpell(pTirion, SPELL_FREE_TIRION, true);
+}
+break;
+}
+case EVENT_END_9:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+pTirion->RemoveAurasDueToSpell(SPELL_ICE_LOCK);
+pTirion->GetMotionMaster()->MovePoint(0, MoveEndingPosition);
+}
+break;
+}
+case EVENT_END_10:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+pTirion->GetMotionMaster()->MoveJump(517.482910f, -2124.905762f, 1040.861328f, 10.0f, 15.0f);
+pTirion->CastSpell(me, 71809, false); // Jumping spell
+pTirion->SetUInt32Value(UNIT_NPC_EMOTESTATE, 375);
+}
+break;
+}
+case EVENT_END_11:
+{
+me->RemoveAura(SPELL_RAISE_DEAD);
+me->CastSpell(me, SPELL_FROSTMOURNE_DISSAPEAR, false);
+break;
+}
+case EVENT_END_12:
+{
+DoCast(me, SPELL_DROP_FROSTMOURNE);
+break;
+}
+case EVENT_END_13:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+me->MonsterYell(SAY_ENDING_6_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_6);
+pTirion->AddAura(71809, me); // Jump Effect Spell
+}
+break;
+}
+case EVENT_END_14:
+{
+DoCast(me, SPELL_SUMMON_FROSTMOURNE_TRIGGER);
+DoCast(me, SPELL_REMOVE_WEAPON);
+break;
+}
+case EVENT_END_15:
+{
+me->RemoveAllAuras();
+//DoPlaySoundToSet(me, SOUND_ENDING_7_KING);
+me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_SUBMERGED);
+break;
+}
+case EVENT_END_16:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+pTirion->MonsterYell(SAY_ENDING_7_TIRION, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(pTirion, SOUND_OUTRO_TIRION_7);
+}
+break;
+}
+case EVENT_END_17:
+{
+DoCast(SPELL_SUMMON_MENETHIL);
+break;
+}
+case EVENT_END_18:
+{
+if(Creature* pFather = me->FindNearestCreature(CREATURE_TERENAS, 50.0f))
+{
+pFather->MonsterYell(SAY_ENDING_8_FATHER, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(pFather, SOUND_OUTRO_FATHER_8);
+}
+break;
+}
+case EVENT_END_19:
+{
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+pTirion->MonsterYell(SAY_ENDING_10_TIRION, LANG_UNIVERSAL, 0);
+break;
+}
+case EVENT_END_20:
+{
+me->MonsterYell(SAY_ENDING_11_KING, LANG_UNIVERSAL, 0);
+DoPlaySoundToSet(me, SOUND_OUTRO_LK_10);
+
+if(Creature* pTirion = Unit::GetCreature(*me, instance->GetData64(DATA_TIRION_FORDRING_ENDER)))
+{
+pTirion->SetReactState(REACT_AGGRESSIVE);
+pTirion->AI()->AttackStart(me);
+}
+
+if(Creature* pFather = me->FindNearestCreature(CREATURE_TERENAS, 50.0f))
+{
+pFather->SetReactState(REACT_AGGRESSIVE);
+pFather->AI()->AttackStart(me);
+}
+break;
+}
+}
+}
+}
+
+private:
+EventMap events;
+InstanceScript* instance;
+SummonList summons;
+
+bool FirstTransition;
+bool SecondTransition;
+bool ThirdTransition;
+
+uint32 uiStage;
+};
+
+CreatureAI* GetAI(Creature* creature) const
+{
+return new boss_the_lich_king_iccAI(creature);
+}
+};
+
+void AddSC_boss_the_lich_king()
+{
+new npc_tirion_fordring_icc();
+new boss_the_lich_king_icc();
+}

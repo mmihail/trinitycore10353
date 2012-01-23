@@ -1,0 +1,33 @@
+--- src/server/game/Entities/Unit/Unit.h_sav	2011-01-09 22:00:55.000000000 +0300
++++ src/server/game/Entities/Unit/Unit.h	2011-01-09 22:01:49.000000000 +0300
+@@ -1219,6 +1219,7 @@
+         inline bool HealthAbovePct(int32 pct) const { return GetHealth() * (uint64)100 > GetMaxHealth() * (uint64)pct; }
+             inline float GetHealthPct() const { return GetMaxHealth() ? 100.f * GetHealth() / GetMaxHealth() : 0.0f; }
+         inline uint32 CountPctFromMaxHealth(int32 pct) const { return uint32(float(pct) * GetMaxHealth() / 100.0f); }
++	inline uint32 CountPctFromCurHealth(int32 pct) const { return uint32(float(pct) * GetHealth() / 100.0f); }
+ 
+         void SetHealth(uint32 val);
+         void SetMaxHealth(uint32 val);
+--- src/server/scripts/Spells/spell_generic.cpp_sav	2011-01-09 22:03:10.000000000 +0300
++++ src/server/scripts/Spells/spell_generic.cpp	2011-01-09 22:06:18.000000000 +0300
+@@ -246,10 +246,11 @@
+ 
+         void HandleEffectPeriodic(AuraEffect const * aurEff, AuraApplication const * aurApp)
+         {
++	  if(aurApp) {
+             if (Unit* pTarget = aurApp->GetTarget())
+                 if (Unit* pCaster = GetCaster())
+                 {
+-                    int32 lifeLeeched = pTarget->CountPctFromMaxHealth(aurEff->GetAmount());
++                    int32 lifeLeeched = pTarget->CountPctFromCurHealth(aurEff->GetAmount());
+                     if (lifeLeeched < 250)
+                         lifeLeeched = 250;
+                     // Damage
+@@ -257,6 +258,7 @@
+                     // Heal
+                     pCaster->CastCustomSpell(pCaster, SPELL_LEECHING_SWARM_HEAL, &lifeLeeched, 0, 0, false);
+                 }
++	  }
+         }
+ 
+         void Register()

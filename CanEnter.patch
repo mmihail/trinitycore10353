@@ -1,0 +1,12 @@
+--- src/server/game/Maps/Map.cpp.orig	2010-12-11 16:12:28.000000000 +0300
++++ src/server/game/Maps/Map.cpp	2010-12-11 16:27:06.000000000 +0300
+@@ -2236,7 +2236,8 @@
+     if (player->GetMapRef().getTarget() == this)
+     {
+         sLog.outError("InstanceMap::CanEnter - player %s(%u) already in map %d,%d,%d!", player->GetName(), player->GetGUIDLow(), GetId(), GetInstanceId(), GetSpawnMode());
+-        ASSERT(false);
++        player->SendTransferAborted(GetId(), TRANSFER_ABORT_MAP_NOT_ALLOWED);
++//        ASSERT(false);
+         return false;
+     }
+ 
