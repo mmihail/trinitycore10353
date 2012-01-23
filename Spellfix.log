@@ -1,0 +1,56 @@
+la2# patch -p1 <  ../icecrown-citadel/Spell_fix.patch
+Hmm...  Looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|﻿diff --git a/src/server/game/Entities/Unit/Unit.cpp b/src/server/game/Entities/Unit/Unit.cpp
+|--- a/src/server/game/Entities/Unit/Unit.cpp
+|+++ b/src/server/game/Entities/Unit/Unit.cpp
+--------------------------
+Patching file src/server/game/Entities/Unit/Unit.cpp using Plan A...
+Hunk #1 succeeded at 8158 (offset 56 lines).
+Hunk #2 succeeded at 8840 (offset 56 lines).
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|
+|diff --git a/src/server/game/Spells/SpellEffects.cpp b/src/server/game/Spells/SpellEffects.cpp
+|--- a/src/server/game/Spells/SpellEffects.cpp
+|+++ b/src/server/game/Spells/SpellEffects.cpp
+--------------------------
+Patching file src/server/game/Spells/SpellEffects.cpp using Plan A...
+Hunk #1 succeeded at 424 (offset 1 line).
+Hunk #2 succeeded at 4336 (offset 2 lines).
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|
+|
+|diff --git a/src/server/game/Spells/Auras/SpellAuraEffects.cpp b/src/server/game/Spells/Auras/SpellAuraEffects.cpp
+|--- a/src/server/game/Spells/Auras/SpellAuraEffects.cpp
+|+++ b/src/server/game/Spells/Auras/SpellAuraEffects.cpp
+--------------------------
+Patching file src/server/game/Spells/Auras/SpellAuraEffects.cpp using Plan A...
+Hunk #1 succeeded at 1850 (offset 14 lines).
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|
+|diff --git a/src/server/game/Spells/Spell.cpp b/src/server/game/Spells/Spell.cpp
+|--- a/src/server/game/Spells/Spell.cpp
+|+++ b/src/server/game/Spells/Spell.cpp
+--------------------------
+Patching file src/server/game/Spells/Spell.cpp using Plan A...
+Hunk #1 succeeded at 5064 (offset 22 lines).
+Hmm...  The next patch looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+|
+|diff --git a/src/server/game/Spells/SpellMgr.cpp b/src/server/game/Spells/SpellMgr.cpp
+|--- a/src/server/game/Spells/SpellMgr.cpp
+|+++ b/src/server/game/Spells/SpellMgr.cpp
+--------------------------
+Patching file src/server/game/Spells/SpellMgr.cpp using Plan A...
+Hunk #1 succeeded at 3623 (offset 2 lines).
+done
+la2#
+
